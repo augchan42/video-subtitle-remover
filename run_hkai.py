@@ -9,11 +9,12 @@ Usage:
     python run_hkai.py <video_path> --all     # process all .mp4 in same dir
     python run_hkai.py --list <path1> <path2>  # process specific files
 
-Output: <filename>_no_sub.mp4 in the same directory as input.
+Output: <filename>_no_sub.mp4 in data/clean/ (or same directory if --in-place).
 """
 
 import sys
 import os
+import shutil
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backend'))
@@ -22,9 +23,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bac
 # Measured from EP01 Part 1: text band at y=470-535, with padding y=450-555
 # Format: (ymin, ymax, xmin, xmax)
 SUB_AREA = (450, 555, 0, 1280)
+OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'clean')
 
 
-def process_video(video_path):
+def process_video(video_path, output_dir=OUTPUT_DIR):
     """Remove hardcoded subtitles from a single video."""
     import config
     from backend.main import SubtitleRemover
@@ -45,8 +47,11 @@ def process_video(video_path):
 
     out_name = os.path.splitext(video_path)[0] + "_no_sub.mp4"
     if os.path.exists(out_name):
-        size_mb = os.path.getsize(out_name) / 1e6
-        print(f"\nOutput: {out_name} ({size_mb:.1f} MB)")
+        os.makedirs(output_dir, exist_ok=True)
+        final_path = os.path.join(output_dir, os.path.basename(out_name))
+        shutil.move(out_name, final_path)
+        size_mb = os.path.getsize(final_path) / 1e6
+        print(f"\nOutput: {final_path} ({size_mb:.1f} MB)")
     else:
         print(f"\nWarning: Expected output not found at {out_name}")
 
